@@ -12,7 +12,7 @@ from llm_generator import (
     generate_story,
     generate_color_palette,
 )
-from image_generator import get_image_client, generate_logos
+from image_generator import generate_logos
 from color_palette import visualize_palette
 
 
@@ -100,9 +100,9 @@ def main():
         brand_name = (
             result["namings"][0]["name"] if result["namings"] else brief["industry"]
         )
-        image_client = get_image_client()
+        #image_client = get_image_client()
         logo_paths = generate_logos(
-            image_client, brand_name, brief, color_palette, output_dir, count=2
+            brand_name, brief, color_palette, output_dir, count=2
         )
         result["logo_files"] = [str(p) for p in logo_paths]
         for p in logo_paths:

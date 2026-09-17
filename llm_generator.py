@@ -1,6 +1,5 @@
 """
-LLM API(OpenAI Chat Completions)를 사용하여
-텍스트 기반 브랜드 요소(네이밍, 슬로건, 스토리, 컬러 팔레트)를 생성하는 모듈
+LLM API를 사용하여 텍스트 기반 브랜드 요소(네이밍, 슬로건, 스토리, 컬러 팔레트)를 생성하는 모듈
 """
 
 import json
@@ -9,7 +8,7 @@ from openai import OpenAI, OpenAIError
 
 from utils import get_api_key
 
-MODEL_NAME = "gpt-4o-mini"  # 팀 상황에 맞게 다른 모델로 교체 가능
+MODEL_NAME = "gpt-5.4"  # 팀 상황에 맞게 다른 모델로 교체 가능
 
 
 def get_client() -> OpenAI:
@@ -42,7 +41,6 @@ def _call_llm_json(client: OpenAI, system_prompt: str, user_prompt: str) -> dict
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
-        response_format={"type": "json_object"},
         temperature=0.9,
     )
     content = response.choices[0].message.content
