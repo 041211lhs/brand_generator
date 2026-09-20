@@ -155,9 +155,6 @@ env/
 venv/
 ENV/
 
-# Project output
-output/
-
 # Spyder project settings
 .spyderproject
 .spyproject
