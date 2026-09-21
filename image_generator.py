@@ -89,10 +89,9 @@ def generate_logos(
             "환경 변수 'OPENAI_BASE_URL'이 설정되어 있지 않습니다."
         )
 
-    # 이미지 API 엔드포인트
     # OPENAI_BASE_URL = https://copa.codyssey.kr/v1
-    # → 이미지 생성 endpoint = /images/generations
-    url = f"{base_url.rstrip('/')}/images/generations"
+    # → 이미지 생성 endpoint = /images
+    url = "https://copa.codyssey.kr/api/v1/images"
 
     headers = {
         "Authorization": f"Bearer {api_key}",

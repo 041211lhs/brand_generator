@@ -3,6 +3,7 @@ LLM API를 사용하여 텍스트 기반 브랜드 요소
 (네이밍, 슬로건, 스토리, 컬러 팔레트)를 생성하는 모듈
 """
 
+import time 
 import json
 import os
 
@@ -52,34 +53,51 @@ def _brief_to_text(brief: dict) -> str:
 def _call_llm_json(
     client: OpenAI,
     system_prompt: str,
-    user_prompt: str
+    user_prompt: str,
+    max_retries: int = 3 # 최대 3번 재시도
 ) -> dict:
     """
     LLM을 호출하고 JSON으로 파싱된 결과를 반환한다.
+    실패 시 최대 max_retries 만큼 재시도(지수 백오프)한다.
     """
+    
+    # 💡 여기서 for문이 시작됩니다! (최대 3번 반복)
+    for attempt in range(max_retries):
+        try:
+            response = client.chat.completions.create(
+                model=MODEL_NAME,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": system_prompt
+                    },
+                    {
+                        "role": "user",
+                        "content": user_prompt
+                    },
+                ],
+                temperature=0.9,
+                #response_format={"type": "json_object"},
+            )
 
-    response = client.chat.completions.create(
-        model=MODEL_NAME,
-        messages=[
-            {
-                "role": "system",
-                "content": system_prompt
-            },
-            {
-                "role": "user",
-                "content": user_prompt
-            },
-        ],
-        temperature=0.9,
-        response_format={"type": "json_object"},
-    )
+            content = response.choices[0].message.content
 
-    content = response.choices[0].message.content
+            if not content:
+                raise ValueError("LLM 응답 내용이 비어 있습니다.")
 
-    if not content:
-        raise ValueError("LLM 응답 내용이 비어 있습니다.")
+            # 성공하면 결과 반환하고 함수 종료 (for문도 끝남)
+            return json.loads(content)
 
-    return json.loads(content)
+        except Exception as e:
+            # 에러가 발생했을 때 실행되는 부분
+            print(f"\n    [경고] API 통신 지연/오류 발생 ({attempt + 1}/{max_retries}회): {e}")
+            
+            if attempt < max_retries - 1:
+                print("    ⏳ 2초 후 재시도합니다...")
+                time.sleep(2) # 2초 대기 (백오프)
+            else:
+                # 3번 다 실패하면 최종 에러를 발생시킴 -> 메인 파일(brand_generator.py)로 넘어가서 JSON에 기록됨
+                raise e
 
 
 def generate_naming(client: OpenAI, brief: dict) -> list:

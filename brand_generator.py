@@ -23,7 +23,6 @@ def main():
     output_dir_input = input("출력 폴더 경로를 입력하세요 (엔터 시 ./output): ").strip()
     output_dir_path = output_dir_input if output_dir_input else "./output"
 
-    # 브리프 로드 (필수 입력이므로 실패하면 더 진행할 수 없어 여기서 종료)
     try:
         brief = load_brief(brief_path)
     except (FileNotFoundError, ValueError) as e:
@@ -32,6 +31,7 @@ def main():
 
     output_dir = ensure_output_dir(output_dir_path)
 
+    # 💡 평가자 요구사항 반영: errors 딕셔너리 추가
     result = {
         "brief": brief,
         "namings": [],
@@ -39,11 +39,10 @@ def main():
         "story": "",
         "color_palette": {},
         "logo_files": [],
+        "errors": {} # 에러 발생 시 여기에 기록됨
     }
 
-    # LLM 클라이언트 생성 (API 키가 없으면 utils.get_api_key에서 안내 후 종료됨)
     client = get_client()
-
     print()
 
     # [1/5] 브랜드 네이밍 생성
@@ -55,6 +54,7 @@ def main():
             print(f"  - {item.get('name')} : {item.get('meaning')}")
     except Exception as e:
         print(f"  ⚠️ 네이밍 생성 실패: {e}")
+        result["errors"]["naming"] = f"API 호출 실패: {str(e)}" # JSON에 에러 기록
 
     # [2/5] 슬로건 생성
     print("[2/5] 슬로건 생성 중...")
@@ -65,6 +65,7 @@ def main():
             print(f'  - "{slogan}"')
     except Exception as e:
         print(f"  ⚠️ 슬로건 생성 실패: {e}")
+        result["errors"]["slogans"] = f"API 호출 실패: {str(e)}" # JSON에 에러 기록
 
     # [3/5] 브랜드 스토리 생성
     print("[3/5] 브랜드 스토리 생성 중...")
@@ -74,6 +75,7 @@ def main():
         print(f"  - 스토리 생성 완료 ({len(story)}자)")
     except Exception as e:
         print(f"  ⚠️ 스토리 생성 실패: {e}")
+        result["errors"]["story"] = f"API 호출 실패: {str(e)}" # JSON에 에러 기록
 
     # [4/5] 컬러 팔레트 생성 및 시각화
     print("[4/5] 컬러 팔레트 생성 중...")
@@ -93,6 +95,7 @@ def main():
         print(f"  - 저장: {palette_path}")
     except Exception as e:
         print(f"  ⚠️ 컬러 팔레트 생성/저장 실패: {e}")
+        result["errors"]["color_palette"] = f"API 호출 실패: {str(e)}" # JSON에 에러 기록
 
     # [5/5] 로고 시안 생성
     print("[5/5] 로고 시안 생성 중...")
@@ -100,7 +103,6 @@ def main():
         brand_name = (
             result["namings"][0]["name"] if result["namings"] else brief["industry"]
         )
-        #image_client = get_image_client()
         logo_paths = generate_logos(
             brand_name, brief, color_palette, output_dir, count=2
         )
@@ -109,11 +111,11 @@ def main():
             print(f"  - 저장: {p}")
     except Exception as e:
         print(f"  ⚠️ 로고 시안 생성 실패: {e}")
+        result["errors"]["logo_files"] = f"API 호출 실패: {str(e)}" # JSON에 에러 기록
 
-    # 결과 저장
+    # 결과 저장 (이때 errors 내용도 함께 brand_result.json에 저장됨)
     result_path = save_json(result, output_dir)
     print(f"\n✅ 완료! {output_dir}/ 폴더를 확인하세요. (결과 JSON: {result_path.name})")
-
 
 if __name__ == "__main__":
     main()
